@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroNest - Kids Learning App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NeuroNest - Smart Learning</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -11,238 +11,179 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
-        body { font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .animate-breathe { animation: breathe 4s ease-in-out infinite; }
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.4); }
+        
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background: #f0f4f8;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
+
+        /* Responsive Container */
+        .app-shell {
+            width: 100%;
+            height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Desktop View (Screen > 768px) */
+        @media (min-width: 768px) {
+            body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            .app-shell {
+                width: 420px;
+                height: 850px;
+                border-radius: 40px;
+                box-shadow: 0 40px 100px rgba(0,0,0,0.4);
+                border: 8px solid #1a202c;
+            }
+        }
+
+        .breathe-circle { animation: breathe 4s ease-in-out infinite; }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.4); opacity: 1; }
+        }
+
+        .tap-scale:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="bg-slate-100">
+<body>
+
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-
-        // --- Global Components ---
-        const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }) => {
-            const variants = {
-                primary: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg active:scale-95',
-                secondary: 'bg-pink-500 text-white hover:bg-pink-600 shadow-md',
-                outline: 'border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50',
-                ghost: 'text-gray-500 hover:bg-gray-100'
-            };
-            return (
-                <button 
-                    disabled={disabled}
-                    onClick={onClick} 
-                    className={`px-6 py-3 rounded-2xl font-bold transition-all duration-200 flex items-center justify-center gap-2 ${variants[variant]} ${disabled ? 'opacity-50' : ''} ${className}`}
-                >
-                    {children}
-                </button>
-            );
-        };
-
-        const Card = ({ children, className = "" }) => (
-            <div className={`bg-white rounded-3xl p-6 shadow-sm border border-indigo-50 ${className}`}>{children}</div>
-        );
 
         const Icon = ({ name, className = "" }) => {
             useEffect(() => { lucide.createIcons(); }, []);
             return <i data-lucide={name} className={className}></i>;
         };
 
-        // --- Main App ---
+        const Button = ({ children, onClick, variant = 'primary', className = "" }) => {
+            const styles = {
+                primary: 'bg-indigo-600 text-white shadow-lg active:bg-indigo-700',
+                outline: 'border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50',
+                game: 'bg-white text-indigo-600 shadow-md hover:shadow-xl'
+            };
+            return (
+                <button onClick={onClick} className={`px-6 py-4 rounded-2xl font-black text-lg transition-all tap-scale flex items-center justify-center gap-3 ${styles[variant]} ${className}`}>
+                    {children}
+                </button>
+            );
+        };
+
         function App() {
             const [screen, setScreen] = useState('splash');
-            const [stars, setStars] = useState(120);
-            const [profile, setProfile] = useState({ name: '', age: '', interests: [], learningMode: 'fun' });
+            const [stars, setStars] = useState(150);
 
             useEffect(() => {
-                if (screen === 'splash') setTimeout(() => setScreen('welcome'), 2500);
+                if (screen === 'splash') setTimeout(() => setScreen('welcome'), 2000);
             }, [screen]);
 
             const renderScreen = () => {
-                switch (screen) {
-                    case 'splash': return <SplashScreen />;
-                    case 'welcome': return <WelcomeScreen onStart={() => setScreen('profile-setup')} onParent={() => setScreen('parent-mode')} />;
-                    case 'profile-setup': return <ProfileSetup profile={profile} setProfile={setProfile} onComplete={() => setScreen('dashboard')} />;
-                    case 'dashboard': return <Dashboard stars={stars} onNavigate={setScreen} />;
-                    case 'game-brain': return <BrainGame onBack={() => setScreen('dashboard')} onWin={() => { setStars(s => s + 20); setScreen('reward'); }} />;
-                    case 'game-emotion': return <EmotionGame onBack={() => setScreen('dashboard')} onComplete={() => { setStars(s => s + 15); setScreen('reward'); }} />;
-                    case 'game-focus': return <FocusGame onBack={() => setScreen('dashboard')} onComplete={() => { setStars(s => s + 25); setScreen('reward'); }} />;
-                    case 'reward': return <RewardScreen onNext={() => setScreen('dashboard')} />;
-                    case 'parent-mode': return <ParentDashboard onBack={() => setScreen('welcome')} />;
-                    default: return <WelcomeScreen onStart={() => setScreen('profile-setup')} />;
+                switch(screen) {
+                    case 'splash': return (
+                        <div className="flex-1 flex flex-col items-center justify-center bg-indigo-600 text-white">
+                            <Icon name="brain" className="w-24 h-24 mb-4 animate-bounce" />
+                            <h1 className="text-4xl font-black italic tracking-tighter">NeuroNest</h1>
+                        </div>
+                    );
+                    case 'welcome': return (
+                        <div className="flex-1 flex flex-col p-10 justify-between">
+                            <div className="text-center">
+                                <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                    <Icon name="sparkles" className="text-indigo-600 w-10 h-10" />
+                                </div>
+                                <h2 className="text-3xl font-black text-slate-800">Hi Explorer!</h2>
+                                <p className="text-slate-500 mt-2 font-semibold">Ready to grow your brain today?</p>
+                            </div>
+                            <div className="space-y-4">
+                                <Button onClick={() => setScreen('dashboard')} className="w-full">Let's Start!</Button>
+                                <Button onClick={() => setScreen('parent')} variant="outline" className="w-full">Parent Dashboard</Button>
+                            </div>
+                        </div>
+                    );
+                    case 'dashboard': return (
+                        <div className="flex-1 flex flex-col bg-slate-50">
+                            <div className="bg-white p-6 flex justify-between items-center border-b shadow-sm">
+                                <h3 className="font-black text-indigo-600 text-xl">NeuroNest</h3>
+                                <div className="bg-amber-100 px-4 py-2 rounded-full flex items-center gap-2 font-black text-amber-700">
+                                    <Icon name="star" className="w-5 h-5 fill-amber-500 text-amber-500" /> {stars}
+                                </div>
+                            </div>
+                            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+                                <div onClick={() => setScreen('game-brain')} className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-[32px] text-white cursor-pointer tap-scale shadow-lg">
+                                    <Icon name="puzzle" className="mb-2" />
+                                    <h4 className="text-xl font-black">Brain Power</h4>
+                                    <p className="opacity-80 font-bold">Memory & Logic</p>
+                                </div>
+                                <div onClick={() => setScreen('game-focus')} className="bg-gradient-to-br from-teal-500 to-teal-600 p-6 rounded-[32px] text-white cursor-pointer tap-scale shadow-lg">
+                                    <Icon name="wind" className="mb-2" />
+                                    <h4 className="text-xl font-black">Calm Breath</h4>
+                                    <p className="opacity-80 font-bold">Focus & Relax</p>
+                                </div>
+                                <div className="bg-pink-100 p-6 rounded-[32px] text-pink-400 flex items-center justify-between opacity-60">
+                                    <div><h4 className="font-black">Emotion Reader</h4><p className="text-sm font-bold">Coming Soon!</p></div>
+                                    <Icon name="lock" />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                    case 'game-brain': return (
+                        <div className="flex-1 bg-white p-8 flex flex-col">
+                            <button onClick={() => setScreen('dashboard')}><Icon name="chevron-left" className="text-slate-400" /></button>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                <h2 className="text-2xl font-black mb-10">Match the <span className="text-blue-600">Circle!</span></h2>
+                                <div className="grid grid-cols-2 gap-6 w-full">
+                                    <div onClick={() => {setStars(s=>s+10); setScreen('dashboard')}} className="bg-blue-600 aspect-square rounded-full shadow-xl tap-scale"></div>
+                                    <div className="bg-slate-100 aspect-square rounded-full"></div>
+                                    <div className="bg-slate-100 aspect-square rounded-full"></div>
+                                    <div className="bg-slate-100 aspect-square rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                    case 'game-focus': return (
+                        <div className="flex-1 bg-teal-50 p-8 flex flex-col items-center justify-center">
+                            <div className="w-56 h-56 bg-teal-500 rounded-full breathe-circle flex items-center justify-center shadow-2xl mb-16">
+                                <Icon name="wind" className="w-20 h-20 text-white" />
+                            </div>
+                            <h2 className="text-3xl font-black text-teal-900 animate-pulse">Breathe...</h2>
+                            <Button onClick={() => setScreen('dashboard')} className="mt-16 w-full bg-teal-600 border-none">I Feel Better</Button>
+                        </div>
+                    );
+                    case 'parent': return (
+                        <div className="flex-1 bg-white p-8 flex flex-col overflow-y-auto">
+                            <button onClick={() => setScreen('welcome')} className="mb-8 flex items-center gap-2 font-bold text-slate-500"><Icon name="arrow-left" /> Back</button>
+                            <h2 className="text-3xl font-black mb-8">Parent Insights</h2>
+                            <div className="space-y-6">
+                                <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
+                                    <p className="text-xs font-black text-slate-400 mb-1 tracking-widest">FOCUS TIME</p>
+                                    <p className="text-3xl font-black text-slate-800">22 Minutes</p>
+                                </div>
+                                <div className="bg-indigo-50 p-6 rounded-3xl border-2 border-indigo-100">
+                                    <p className="text-xs font-black text-indigo-400 mb-1 tracking-widest">STARS EARNED</p>
+                                    <p className="text-3xl font-black text-indigo-700">{stars}</p>
+                                </div>
+                                <div className="bg-amber-50 p-6 rounded-3xl">
+                                    <p className="font-bold text-amber-800 italic">"Buddy is showing great focus in calm breathing tasks today."</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
                 }
             };
 
             return (
-                <div className="min-h-screen flex justify-center items-center">
-                    <div className="w-full max-w-md h-[100dvh] bg-white shadow-2xl relative overflow-hidden flex flex-col">
-                        {renderScreen()}
-                    </div>
-                </div>
-            );
-        }
-
-        // --- Screen Components ---
-
-        function SplashScreen() {
-            return (
-                <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600 to-violet-700 text-white">
-                    <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl mb-6 animate-bounce">
-                        <Icon name="brain" className="w-16 h-16 text-indigo-600" />
-                    </div>
-                    <h1 className="text-4xl font-black italic">NeuroNest</h1>
-                </div>
-            );
-        }
-
-        function WelcomeScreen({ onStart, onParent }) {
-            return (
-                <div className="flex-1 flex flex-col p-8 justify-between">
-                    <div className="mt-12 text-center">
-                        <Icon name="brain" className="w-20 h-20 text-indigo-600 mx-auto mb-6" />
-                        <h2 className="text-3xl font-black text-slate-900 mb-4">Welcome to NeuroNest</h2>
-                        <p className="text-slate-500">The digital playground that grows with your child's brain.</p>
-                    </div>
-                    <div className="space-y-4 mb-12">
-                        <Button onClick={onStart} className="w-full text-lg py-5">Let's Play!</Button>
-                        <Button onClick={onParent} variant="outline" className="w-full"><Icon name="settings" /> Parent Mode</Button>
-                    </div>
-                </div>
-            );
-        }
-
-        function ProfileSetup({ profile, setProfile, onComplete }) {
-            const [step, setStep] = useState(1);
-            return (
-                <div className="flex-1 p-8 flex flex-col">
-                    <h2 className="text-2xl font-black mb-6">{step === 1 ? "What's your name?" : "Select your age"}</h2>
-                    {step === 1 ? (
-                        <input type="text" className="w-full p-4 rounded-2xl border-2 mb-4 outline-none focus:border-indigo-600" value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} />
-                    ) : (
-                        <div className="grid grid-cols-3 gap-3">
-                            {[3, 4, 5, 6, 7, 8].map(age => (
-                                <button key={age} onClick={() => setProfile({...profile, age})} className={`p-4 rounded-2xl border-2 font-bold ${profile.age === age ? 'border-indigo-600 bg-indigo-50' : 'border-slate-100'}`}>{age}</button>
-                            ))}
-                        </div>
-                    )}
-                    <Button className="mt-auto" onClick={() => step < 2 ? setStep(2) : onComplete()} disabled={step === 1 && !profile.name}>Next</Button>
-                </div>
-            );
-        }
-
-        function Dashboard({ stars, onNavigate }) {
-            return (
-                <div className="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
-                    <div className="bg-white p-6 border-b flex justify-between items-center sticky top-0 z-10">
-                        <h3 className="text-lg font-black">Hi, Buddy!</h3>
-                        <div className="bg-amber-100 px-3 py-1.5 rounded-full flex items-center gap-2">
-                            <Icon name="star" className="w-5 h-5 text-amber-500 fill-amber-500" />
-                            <span className="font-bold text-amber-700">{stars}</span>
-                        </div>
-                    </div>
-                    <div className="p-6 grid grid-cols-2 gap-4">
-                        <ModuleCard icon="brain" title="Brain" color="bg-blue-50" onClick={() => onNavigate('game-brain')} />
-                        <ModuleCard icon="heart" title="Emotion" color="bg-pink-50" onClick={() => onNavigate('game-emotion')} />
-                        <ModuleCard icon="target" title="Focus" color="bg-orange-50" onClick={() => onNavigate('game-focus')} />
-                        <ModuleCard icon="lock" title="Social" color="bg-purple-50" locked />
-                    </div>
-                </div>
-            );
-        }
-
-        function ModuleCard({ icon, title, color, onClick, locked }) {
-            return (
-                <button onClick={!locked ? onClick : undefined} className={`${color} rounded-3xl p-6 flex flex-col items-center gap-3 active:scale-95 transition-all`}>
-                    <Icon name={icon} className={locked ? "opacity-30" : "text-indigo-600"} />
-                    <span className="font-black text-slate-800">{title}</span>
-                </button>
-            );
-        }
-
-        function BrainGame({ onBack, onWin }) {
-            return (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white">
-                    <h2 className="text-2xl font-black mb-12">Find the <span className="text-blue-600">Blue</span> Circle!</h2>
-                    <div className="grid grid-cols-2 gap-4 w-full">
-                        <div onClick={onWin} className="bg-blue-500 aspect-square rounded-[40px] cursor-pointer active:scale-90 transition-all"></div>
-                        <div className="bg-red-500 aspect-square rounded-[40px]"></div>
-                        <div className="bg-green-500 aspect-square rounded-[40px]"></div>
-                        <div className="bg-yellow-500 aspect-square rounded-[40px]"></div>
-                    </div>
-                </div>
-            );
-        }
-
-        function EmotionGame({ onBack, onComplete }) {
-            return (
-                <div className="flex-1 p-8 flex flex-col bg-pink-50 text-center">
-                    <Card className="mb-8">
-                        <div className="text-6xl mb-4">😢</div>
-                        <h3 className="text-xl font-bold mb-2">Momo is sad.</h3>
-                        <p className="text-slate-600 italic">"I lost my favorite banana..."</p>
-                    </Card>
-                    <div className="space-y-3">
-                        <Button variant="outline" className="w-full bg-white" onClick={onComplete}>Give Momo a hug</Button>
-                        <Button variant="outline" className="w-full bg-white" onClick={onComplete}>Help find the banana</Button>
-                    </div>
-                </div>
-            );
-        }
-
-        function FocusGame({ onBack, onComplete }) {
-            const [inhale, setInhale] = useState(true);
-            useEffect(() => {
-                const interval = setInterval(() => setInhale(i => !i), 4000);
-                return () => clearInterval(interval);
-            }, []);
-            return (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-teal-50">
-                    <div className={`w-40 h-40 bg-teal-500 rounded-full mb-12 animate-breathe flex items-center justify-center text-white`}>
-                        <Icon name="zap" className="w-12 h-12" />
-                    </div>
-                    <h2 className="text-2xl font-black text-teal-900 mb-8">{inhale ? 'Inhale...' : 'Exhale...'}</h2>
-                    <Button onClick={onComplete}>I'm Calm Now</Button>
-                </div>
-            );
-        }
-
-        function RewardScreen({ onNext }) {
-            return (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-amber-50">
-                    <Icon name="trophy" className="w-32 h-32 text-amber-500 mb-6" />
-                    <h2 className="text-3xl font-black mb-2">Awesome!</h2>
-                    <p className="mb-8">+20 Energy Stars</p>
-                    <Button onClick={onNext} className="w-full">Continue</Button>
-                </div>
-            );
-        }
-
-        function ParentDashboard({ onBack }) {
-            return (
-                <div className="flex-1 bg-slate-50 p-6 overflow-y-auto">
-                    <div className="flex items-center gap-4 mb-6">
-                        <button onClick={onBack}><Icon name="arrow-left" /></button>
-                        <h2 className="text-xl font-bold">Parent Insights</h2>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="bg-indigo-50 p-4 rounded-2xl">
-                            <p className="text-xs font-bold text-indigo-400">SCREEN TIME</p>
-                            <p className="text-2xl font-black text-indigo-700">18m</p>
-                        </div>
-                        <div className="bg-pink-50 p-4 rounded-2xl">
-                            <p className="text-xs font-bold text-pink-400">HAPPINESS</p>
-                            <p className="text-2xl font-black text-pink-700">High</p>
-                        </div>
-                    </div>
-                    <Card className="bg-indigo-600 text-white">
-                        <h4 className="font-bold mb-2">Coach Suggestion</h4>
-                        <p className="text-sm opacity-90">Your child is doing great with empathy! Try more memory puzzles next.</p>
-                    </Card>
+                <div className="app-shell">
+                    {renderScreen()}
                 </div>
             );
         }
