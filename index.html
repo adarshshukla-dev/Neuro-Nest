@@ -3,206 +3,403 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NeuroNest 🧠 Easy Login</title>
+<title>NeuroNest - Kids Learning Platform</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
 <style>
-body{font-family:Nunito, sans-serif;}
-.fade{animation:fade .3s ease;}
-@keyframes fade{from{opacity:0}to{opacity:1}}
-.pop{animation:pop .2s ease;}
-@keyframes pop{0%{transform:scale(.9)}100%{transform:scale(1)}}
+body { font-family: sans-serif; }
 </style>
 </head>
 
-<body class="bg-gradient-to-br from-indigo-100 to-pink-100">
-<div id="app" class="min-h-screen"></div>
+<body class="bg-slate-100">
+<div id="root"></div>
 
-<script>
-const app = document.getElementById("app");
+<script type="text/babel">
 
-/* ---------- GLOBAL STATE ---------- */
-let state = {
-  user: localStorage.getItem("neuronest_user") || null,
-  stars: Number(localStorage.getItem("stars")) || 0,
-  level: Number(localStorage.getItem("level")) || 1
+const { useState, useEffect } = React;
+
+/* ---------------- BUTTON ---------------- */
+
+const Button = ({children,onClick,className=''})=>(
+<button
+onClick={onClick}
+className={`px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 active:scale-95 transition ${className}`}
+>
+{children}
+</button>
+);
+
+/* ---------------- GAME LAYOUT ---------------- */
+
+const GameLayout=({title,children,onBack})=>(
+<div className="min-h-screen flex flex-col items-center justify-center text-center">
+<h2 className="text-2xl font-bold mb-6">{title}</h2>
+{children}
+<Button className="mt-6 bg-gray-600" onClick={onBack}>Back</Button>
+</div>
+);
+
+/* ---------------- TIC TAC TOE ---------------- */
+
+function TicTacToe({reward,goBack}){
+
+const [board,setBoard]=useState(Array(9).fill(null));
+const [winner,setWinner]=useState(null);
+const [mode,setMode]=useState(null); // ai or 2p
+const [xTurn,setXTurn]=useState(true);
+
+const lines=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+
+const checkWinner=(b)=>{
+for(let [a,b1,c] of lines){
+if(b[a] && b[a]===b[b1] && b[a]===b[c]){
+return b[a];
+}
+}
+if(b.every(cell=>cell)) return "draw";
+return null;
 };
 
-/* ---------- UTILS ---------- */
-function save(){
-  localStorage.setItem("neuronest_user",state.user);
-  localStorage.setItem("stars",state.stars);
-  localStorage.setItem("level",state.level);
+const aiMove=(newBoard)=>{
+const empty=newBoard.map((v,i)=>v===null?i:null).filter(v=>v!==null);
+if(empty.length===0) return;
+const randomIndex=empty[Math.floor(Math.random()*empty.length)];
+newBoard[randomIndex]="O";
+};
+
+const handleClick=(i)=>{
+if(board[i] || winner) return;
+
+let newBoard=[...board];
+
+if(mode==="ai"){
+newBoard[i]="X";
+let result=checkWinner(newBoard);
+
+if(!result){
+aiMove(newBoard);
+result=checkWinner(newBoard);
 }
 
-/* ---------- LOGIN ---------- */
-function renderLogin(){
-app.innerHTML = `
-<div class="min-h-screen flex items-center justify-center fade">
-<div class="bg-white p-8 rounded-2xl shadow-xl w-80 text-center">
-<h1 class="text-4xl font-black text-indigo-700 mb-4">NeuroNest 🧠</h1>
-<p class="mb-4 text-gray-500">Enter your name to start</p>
-<input id="name" placeholder="Your Name" class="border p-3 rounded-xl w-full mb-4"/>
-<button onclick="login()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl pop">Start Learning</button>
+setBoard(newBoard);
+
+if(result){
+setWinner(result);
+if(result==="X"){
+setTimeout(()=>reward(20),800);
+}
+}
+}
+else if(mode==="2p"){
+newBoard[i]=xTurn?"X":"O";
+setBoard(newBoard);
+setXTurn(!xTurn);
+
+let result=checkWinner(newBoard);
+if(result){
+setWinner(result);
+if(result!=="draw"){
+setTimeout(()=>reward(20),800);
+}
+}
+}
+};
+
+return(
+<GameLayout title="Tic Tac Toe 🎮" onBack={goBack}>
+
+{/* Mode Selection */}
+{!mode && (
+<div className="flex gap-4 mb-6">
+<Button onClick={()=>setMode("ai")}>Play vs AI 🤖</Button>
+<Button onClick={()=>setMode("2p")} className="bg-green-600">2 Player 👥</Button>
 </div>
-</div>`;
-}
+)}
 
-function login(){
- const name = document.getElementById("name").value.trim();
- if(name.length<2){ alert("Enter valid name"); return; }
- state.user = name;
- save();
- renderDashboard();
-}
-
-function logout(){
- localStorage.clear();
- state={user:null,stars:0,level:1};
- renderLogin();
-}
-
-/* ---------- DASHBOARD ---------- */
-function renderDashboard(){
-app.innerHTML = `
-<div class="p-4 fade max-w-md mx-auto">
-<div class="bg-white p-4 rounded-xl shadow flex justify-between items-center">
-<span class="font-bold">Hi ${state.user} 👋</span>
-<button onclick="logout()" class="text-red-500 font-bold">Logout</button>
+{mode && (
+<>
+<div className="grid grid-cols-3 gap-2">
+{board.map((val,i)=>(
+<div
+key={i}
+onClick={()=>handleClick(i)}
+className="w-20 h-20 bg-indigo-200 flex items-center justify-center text-3xl font-bold cursor-pointer hover:bg-indigo-300 transition">
+{val}
+</div>
+))}
 </div>
 
-<div class="flex justify-between mt-3 bg-white p-3 rounded-xl shadow text-sm">
-<span>⭐ ${state.stars}</span>
-<span>Level ${state.level}</span>
+{winner==="draw" &&
+<p className="mt-4 text-xl font-bold text-yellow-600">
+🤝 It's a Draw!
+</p>}
+
+{winner && winner!=="draw" &&
+<p className="mt-4 text-xl font-bold text-green-600 animate-bounce">
+🏆 Winner: {winner}
+</p>}
+
+<Button className="mt-4"
+onClick={()=>{
+setBoard(Array(9).fill(null));
+setWinner(null);
+setXTurn(true);
+}}>
+Restart
+</Button>
+
+<Button className="mt-4 bg-red-500"
+onClick={()=>{
+setBoard(Array(9).fill(null));
+setWinner(null);
+setMode(null);
+setXTurn(true);
+}}>
+Change Mode
+</Button>
+</>
+)}
+
+</GameLayout>
+);
+}
+
+/* ---------------- APP ---------------- */
+
+function App(){
+
+const [screen,setScreen]=useState('welcome');
+const [name,setName]=useState('');
+const [age,setAge]=useState(null);
+
+/* Stars Saved */
+const [stars,setStars]=useState(()=>{
+return parseInt(localStorage.getItem("stars")) || 0;
+});
+
+const reward=(points)=>{
+setStars(s=>{
+const newStars=s+points;
+localStorage.setItem("stars",newStars);
+return newStars;
+});
+setScreen('reward');
+};
+
+/* ---------------- SCREENS ---------------- */
+
+if(screen==='welcome'){
+return(
+<div className="min-h-screen flex flex-col items-center justify-center text-center">
+<h1 className="text-4xl font-black mb-4">Welcome to NeuroNest 🧠</h1>
+<p className="mb-8">Digital playground for smart kids</p>
+<Button onClick={()=>setScreen('login')}>Let's Play</Button>
+<Button className="mt-4 bg-gray-600" onClick={()=>setScreen('parent')}>Parent Mode</Button>
+</div>
+);
+}
+
+if(screen==='login'){
+return(
+<div className="min-h-screen flex flex-col items-center justify-center">
+<h2 className="text-2xl font-bold mb-6">Login</h2>
+<input className="border p-3 rounded-xl mb-4 w-64" placeholder="Email"/>
+<input className="border p-3 rounded-xl mb-4 w-64" type="password" placeholder="Password"/>
+<Button onClick={()=>setScreen('name')}>Login</Button>
+</div>
+);
+}
+
+if(screen==='name'){
+return(
+<div className="min-h-screen flex flex-col items-center justify-center">
+<h2 className="text-2xl font-bold mb-6">What's your name?</h2>
+<input className="border p-3 rounded-xl mb-4 w-64"
+value={name}
+onChange={(e)=>setName(e.target.value)}
+/>
+<Button onClick={()=>setScreen('age')}>Next</Button>
+</div>
+);
+}
+
+if(screen==='age'){
+return(
+<div className="min-h-screen flex flex-col items-center justify-center">
+<h2 className="text-2xl font-bold mb-6">Select your age</h2>
+<div className="flex gap-4 mb-6">
+{[3,4,5,6,7,8].map(num=>(
+<button
+key={num}
+onClick={()=>setAge(num)}
+className={`px-6 py-3 rounded-xl border ${age===num?'bg-indigo-600 text-white':''}`}
+>
+{num}
+</button>
+))}
+</div>
+<Button onClick={()=>setScreen('dashboard')}>Next</Button>
+</div>
+);
+}
+
+if(screen==='dashboard'){
+return(
+<div className="p-8">
+<h2 className="text-2xl font-black mb-2">Hi {name} 👋</h2>
+<p className="mb-6">Age: {age} | Stars ⭐ {stars}</p>
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+{[
+['Math','math'],
+['Alphabet','alphabet'],
+['Memory','memory'],
+['Colors','colors'],
+['Numbers','numbers'],
+['Animals','animals'],
+['Shapes','shapes'],
+['Words','words'],
+['TicTacToe','tictactoe']
+].map(([title,key])=>(
+<div key={key}
+onClick={()=>setScreen(key)}
+className="bg-indigo-100 p-6 rounded-2xl text-center font-bold cursor-pointer hover:scale-105 transition">
+{title}
+</div>
+))}
 </div>
 
-<h2 class="text-2xl font-black mt-4 mb-3">Games</h2>
-
-<div class="grid grid-cols-2 gap-3">
-<div onclick="mathGame()" class="bg-green-200 p-5 rounded-xl text-center font-bold cursor-pointer pop">Math</div>
-<div onclick="memoryGame()" class="bg-purple-200 p-5 rounded-xl text-center font-bold cursor-pointer pop">Memory</div>
-<div onclick="alphabetGame()" class="bg-yellow-200 p-5 rounded-xl text-center font-bold cursor-pointer pop">Alphabet</div>
-<div onclick="colorGame()" class="bg-red-200 p-5 rounded-xl text-center font-bold cursor-pointer pop">Colors</div>
+<div className="mt-8">
+<Button onClick={()=>setScreen('welcome')} className="bg-gray-500">Home</Button>
 </div>
-
-<h2 class="text-2xl font-black mt-5 mb-3">More</h2>
-<div class="grid grid-cols-2 gap-3">
-<div onclick="renderParent()" class="bg-blue-200 p-4 rounded-xl text-center font-bold cursor-pointer">Parent Mode</div>
-<div onclick="renderLeaderboard()" class="bg-orange-200 p-4 rounded-xl text-center font-bold cursor-pointer">Leaderboard</div>
 </div>
-</div>`;
+);
 }
 
-/* ---------- REWARD ---------- */
-function reward(points){
- state.stars += points;
- if(state.stars % 50 === 0) state.level++;
- save();
+/* ---------------- SIMPLE GAMES ---------------- */
+
+if(screen==='math'){
+const [ans,setAns]=useState('');
+return(
+<GameLayout title="2 + 3 = ?" onBack={()=>setScreen('dashboard')}>
+<input className="border p-3 rounded-xl mb-4"
+value={ans}
+onChange={(e)=>setAns(e.target.value)}
+/>
+<Button onClick={()=>ans==5 && reward(10)}>Submit</Button>
+</GameLayout>
+);
 }
 
-/* ---------- GAMES ---------- */
-
-/* Math */
-function mathGame(){
- const a = state.level + 1;
- const b = state.level;
- app.innerHTML = `
-<div class="min-h-screen flex flex-col items-center justify-center fade">
-<h1 class="text-5xl font-black mb-4">${a} + ${b} = ?</h1>
-<input id="ans" class="border p-3 rounded-xl mb-4"/>
-<button onclick="checkMath(${a+b})" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl">Submit</button>
-</div>`;
-}
-function checkMath(correct){
- const val = Number(document.getElementById("ans").value);
- if(val===correct){
-   reward(10);
-   alert("Correct! ⭐ +10");
- }
- renderDashboard();
-}
-
-/* Memory */
-function memoryGame(){
- const num = Math.floor(Math.random()*900)+100;
- app.innerHTML = `
-<div class="min-h-screen flex flex-col items-center justify-center fade">
-<h1 class="text-6xl font-black mb-4">${num}</h1>
-<p class="mb-4">Remember this number</p>
-<button onclick="reward(15);renderDashboard()" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl">Next</button>
-</div>`;
-}
-
-/* Alphabet */
-function alphabetGame(){
- const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
- const target = letters[state.level%26];
- const options = letters.slice(0,6).split('').sort(()=>0.5-Math.random());
- app.innerHTML=`
-<div class="min-h-screen flex flex-col items-center justify-center fade">
-<h2 class="text-3xl font-black mb-4">Click ${target}</h2>
-<div class="flex gap-4 text-4xl font-bold">
-${options.map(l=>`<span onclick="alphaCheck('${l}','${target}')" class="cursor-pointer">${l}</span>`).join("")}
+if(screen==='alphabet'){
+return(
+<GameLayout title="Click A" onBack={()=>setScreen('dashboard')}>
+<div className="flex gap-6 text-4xl font-bold">
+<span onClick={()=>reward(10)} className="cursor-pointer">A</span>
+<span>B</span>
+<span>C</span>
 </div>
-</div>`;
-}
-function alphaCheck(l,t){
- if(l===t){ reward(10); alert("Correct ⭐"); }
- renderDashboard();
+</GameLayout>
+);
 }
 
-/* Colors */
-function colorGame(){
- const colors=[{n:"Red",c:"red"},{n:"Blue",c:"blue"},{n:"Green",c:"green"}];
- const t=colors[state.level%3];
- app.innerHTML=`
-<div class="min-h-screen flex flex-col items-center justify-center fade">
-<h2 class="text-3xl font-black mb-4">Click ${t.n}</h2>
-<div class="flex gap-4">
-${colors.map(col=>`
-<div onclick="colorCheck('${col.n}','${t.n}')" 
-style="background:${col.c}" 
-class="w-20 h-20 rounded-xl cursor-pointer"></div>`).join("")}
+if(screen==='memory'){
+const [show,setShow]=useState(true);
+useEffect(()=>{setTimeout(()=>setShow(false),2000)},[]);
+return(
+<GameLayout title="Remember 8" onBack={()=>setScreen('dashboard')}>
+{show?<h1 className="text-6xl font-bold">8</h1>:<Button onClick={()=>reward(15)}>It was 8</Button>}
+</GameLayout>
+);
+}
+
+if(screen==='colors'){
+return(
+<GameLayout title="Click Red" onBack={()=>setScreen('dashboard')}>
+<div className="flex gap-4">
+<div onClick={()=>reward(10)} className="w-16 h-16 bg-red-500 rounded-xl"></div>
+<div className="w-16 h-16 bg-blue-500 rounded-xl"></div>
 </div>
-</div>`;
-}
-function colorCheck(c,t){
- if(c===t){ reward(10); alert("Correct ⭐"); }
- renderDashboard();
+</GameLayout>
+);
 }
 
-/* ---------- PARENT MODE ---------- */
-function renderParent(){
-app.innerHTML=`
-<div class="p-6 fade max-w-md mx-auto">
-<h2 class="text-3xl font-black mb-4">Parent Dashboard</h2>
-<p><b>Child:</b> ${state.user}</p>
-<p><b>Stars:</b> ${state.stars}</p>
-<p><b>Level:</b> ${state.level}</p>
-<p class="mt-3 text-gray-600">Progress tracking enabled</p>
-<button onclick="renderDashboard()" class="mt-4 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl">Back</button>
-</div>`;
+if(screen==='numbers'){
+return(
+<GameLayout title="Smallest Number?" onBack={()=>setScreen('dashboard')}>
+<div className="flex gap-6 text-3xl">
+<span onClick={()=>reward(10)}>1</span>
+<span>5</span>
+<span>9</span>
+</div>
+</GameLayout>
+);
 }
 
-/* ---------- LEADERBOARD ---------- */
-function renderLeaderboard(){
-app.innerHTML=`
-<div class="p-6 fade max-w-md mx-auto">
-<h2 class="text-3xl font-black mb-4">Leaderboard</h2>
-<ol class="list-decimal ml-6">
-<li>Kid Alpha - 500⭐</li>
-<li>Kid Beta - 420⭐</li>
-<li>${state.user} - ${state.stars}⭐</li>
-</ol>
-<button onclick="renderDashboard()" class="mt-4 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl">Back</button>
-</div>`;
+if(screen==='animals'){
+return(
+<GameLayout title="Who says Meow?" onBack={()=>setScreen('dashboard')}>
+<Button onClick={()=>reward(10)}>Cat</Button>
+<Button>Dog</Button>
+</GameLayout>
+);
 }
 
-/* ---------- INIT ---------- */
-if(state.user){
- renderDashboard();
-}else{
- renderLogin();
+if(screen==='shapes'){
+return(
+<GameLayout title="Click Circle" onBack={()=>setScreen('dashboard')}>
+<div className="flex gap-6">
+<div onClick={()=>reward(10)} className="w-16 h-16 bg-indigo-500 rounded-full"></div>
+<div className="w-16 h-16 bg-indigo-500"></div>
+</div>
+</GameLayout>
+);
 }
+
+if(screen==='words'){
+return(
+<GameLayout title="Spell CAT" onBack={()=>setScreen('dashboard')}>
+<Button onClick={()=>reward(15)}>C A T</Button>
+</GameLayout>
+);
+}
+
+if(screen==='tictactoe'){
+return <TicTacToe reward={reward} goBack={()=>setScreen('dashboard')} />;
+}
+
+if(screen==='reward'){
+return(
+<div className="min-h-screen flex flex-col items-center justify-center text-center">
+<h2 className="text-3xl font-black mb-6">Great Job! ⭐</h2>
+<p className="mb-6">Total Stars: {stars}</p>
+<Button onClick={()=>setScreen('dashboard')}>Back to Dashboard</Button>
+</div>
+);
+}
+
+if(screen==='parent'){
+return(
+<div className="min-h-screen flex flex-col items-center justify-center text-center">
+<h2 className="text-3xl font-black mb-6">Parent Dashboard</h2>
+<p>Total Stars Earned: {stars}</p>
+<Button className="mt-6" onClick={()=>setScreen('welcome')}>Back</Button>
+</div>
+);
+}
+
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
 </script>
 </body>
 </html>
