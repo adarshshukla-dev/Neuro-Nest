@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroNest - Kids Learning Platform</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroNest - Kids Learning Platform</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
-        body { font-family: 'Nunito', sans-serif; }
-        .animate-breathe { animation: breathe 4s ease-in-out infinite; }
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.4); }
-        }
-    </style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
+body { font-family: 'Nunito', sans-serif; }
+.animate-breathe { animation: breathe 4s ease-in-out infinite; }
+@keyframes breathe {
+0%,100%{transform:scale(1);}
+50%{transform:scale(1.4);}
+}
+</style>
 </head>
 
 <body class="bg-slate-100">
@@ -29,206 +29,257 @@
 
 const { useState, useEffect } = React;
 
-/* ---------- GLOBAL COMPONENTS ---------- */
+/* ------------------ GLOBAL COMPONENTS ------------------ */
 
 const Button = ({ children, onClick, variant='primary', className='', disabled=false }) => {
-    const styles = {
-        primary: 'bg-indigo-600 text-white hover:bg-indigo-700',
-        outline: 'border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50',
-        ghost: 'text-gray-500 hover:bg-gray-100'
-    };
-    return (
-        <button
-            disabled={disabled}
-            onClick={onClick}
-            className={`px-6 py-3 rounded-2xl font-bold transition active:scale-95 ${styles[variant]} ${disabled?'opacity-50':''} ${className}`}
-        >
-            {children}
-        </button>
-    );
+const styles = {
+primary: 'bg-indigo-600 text-white hover:bg-indigo-700',
+outline: 'border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50',
+ghost: 'text-gray-500 hover:bg-gray-100'
 };
-
-const Card = ({ children, className='' }) => (
-    <div className={`bg-white rounded-3xl p-6 shadow-sm ${className}`}>
-        {children}
-    </div>
+return (
+<button
+disabled={disabled}
+onClick={onClick}
+className={`px-6 py-3 rounded-2xl font-bold transition active:scale-95 ${styles[variant]} ${disabled?'opacity-50':''} ${className}`}
+>
+{children}
+</button>
 );
+};
 
 const Icon = ({ name, className='' }) => {
-    useEffect(()=>{ lucide.createIcons(); },[]);
-    return <i data-lucide={name} className={className}></i>;
+useEffect(()=>{ lucide.createIcons(); },[]);
+return <i data-lucide={name} className={className}></i>;
 };
 
-/* ---------- MAIN APP ---------- */
+function GameLayout({title,onBack,children}){
+return(
+<div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
+<Button variant="ghost" onClick={onBack}>Back</Button>
+<h2 className="text-2xl font-black my-8">{title}</h2>
+{children}
+</div>
+);
+}
+
+/* ------------------ MAIN APP ------------------ */
 
 function App(){
 
-    const [screen,setScreen]=useState('welcome');
-    const [stars,setStars]=useState(120);
-    const [profile,setProfile]=useState({name:'',age:''});
+const [screen,setScreen]=useState('dashboard');
+const [stars,setStars]=useState(120);
 
-    const renderScreen=()=>{
-        switch(screen){
-            case 'welcome': return <Welcome onStart={()=>setScreen('profile')} />;
-            case 'profile': return <Profile profile={profile} setProfile={setProfile} onComplete={()=>setScreen('dashboard')} />;
-            case 'dashboard': return <Dashboard stars={stars} navigate={setScreen} />;
-            case 'brain': return <BrainGame onBack={()=>setScreen('dashboard')} onWin={()=>{setStars(s=>s+20);setScreen('reward')}} />;
-            case 'emotion': return <EmotionGame onBack={()=>setScreen('dashboard')} onWin={()=>{setStars(s=>s+15);setScreen('reward')}} />;
-            case 'focus': return <FocusGame onBack={()=>setScreen('dashboard')} onWin={()=>{setStars(s=>s+25);setScreen('reward')}} />;
-            case 'reward': return <Reward onNext={()=>setScreen('dashboard')} />;
-            case 'parent': return <ParentDashboard onBack={()=>setScreen('dashboard')} />;
-        }
-    };
+const renderScreen=()=>{
+switch(screen){
 
-    return(
-        <div className="min-h-screen flex">
+case 'dashboard': return <Dashboard navigate={setScreen} />;
+case 'brain': return <BrainGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(20)} />;
+case 'emotion': return <EmotionGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(15)} />;
+case 'focus': return <FocusGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(25)} />;
 
-            {/* Sidebar Desktop */}
-            <div className="hidden md:flex w-64 bg-indigo-700 text-white flex-col p-6">
-                <h1 className="text-2xl font-black mb-8">NeuroNest</h1>
+case 'math': return <MathGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(10)} />;
+case 'alphabet': return <AlphabetGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(10)} />;
+case 'memory': return <MemoryGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(15)} />;
+case 'colors': return <ColorGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(10)} />;
+case 'numbers': return <NumberGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(10)} />;
+case 'animals': return <AnimalGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(10)} />;
+case 'shapes': return <ShapeGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(10)} />;
+case 'words': return <WordGame onBack={()=>setScreen('dashboard')} onWin={()=>reward(15)} />;
 
-                <button onClick={()=>setScreen('dashboard')} className="mb-3 hover:bg-indigo-600 p-3 rounded-xl text-left">Dashboard</button>
-                <button onClick={()=>setScreen('parent')} className="hover:bg-indigo-600 p-3 rounded-xl text-left">Parent Mode</button>
+case 'reward': return <Reward onNext={()=>setScreen('dashboard')} />;
 
-                <div className="mt-auto text-sm opacity-70">
-                    Smart Kids Learning
-                </div>
-            </div>
+}
+};
 
-            {/* Main Content */}
-            <div className="flex-1 bg-white shadow-inner flex flex-col">
-                {renderScreen()}
-            </div>
+const reward=(points)=>{
+setStars(s=>s+points);
+setScreen('reward');
+};
 
-            {/* Right Panel Desktop */}
-            <div className="hidden lg:flex w-72 bg-white border-l p-6 flex-col">
-                <h3 className="font-bold text-lg mb-6">Live Stats</h3>
+return(
+<div className="min-h-screen flex">
 
-                <div className="bg-amber-50 p-4 rounded-2xl mb-4">
-                    <p className="text-xs font-bold text-amber-500">ENERGY STARS</p>
-                    <p className="text-2xl font-black text-amber-600">{stars}</p>
-                </div>
+{/* Sidebar Desktop */}
+<div className="hidden md:flex w-64 bg-indigo-700 text-white flex-col p-6">
+<h1 className="text-2xl font-black mb-8">NeuroNest</h1>
+<button onClick={()=>setScreen('dashboard')} className="mb-3 hover:bg-indigo-600 p-3 rounded-xl text-left">Dashboard</button>
+<div className="mt-auto text-sm opacity-70">Smart Kids Learning</div>
+</div>
 
-                <div className="bg-green-50 p-4 rounded-2xl">
-                    <p className="text-xs font-bold text-green-500">ACTIVE SCREEN</p>
-                    <p className="text-lg font-black text-green-700 capitalize">{screen}</p>
-                </div>
-            </div>
+{/* Main */}
+<div className="flex-1 bg-white flex flex-col">
+<div className="p-4 border-b flex justify-between">
+<h2 className="font-black">Energy ⭐ {stars}</h2>
+</div>
+{renderScreen()}
+</div>
 
-        </div>
-    );
+</div>
+);
 }
 
-/* ---------- SCREENS ---------- */
+/* ------------------ DASHBOARD ------------------ */
 
-function Welcome({onStart}){
-    return(
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-10">
-            <Icon name="brain" className="w-20 h-20 text-indigo-600 mb-6"/>
-            <h2 className="text-3xl font-black mb-4">Welcome to NeuroNest</h2>
-            <Button onClick={onStart}>Let's Start</Button>
-        </div>
-    );
+function Dashboard({navigate}){
+return(
+<div className="p-8 grid grid-cols-2 md:grid-cols-3 gap-6">
+{[
+['Brain','brain','bg-blue-100'],
+['Emotion','emotion','bg-pink-100'],
+['Focus','focus','bg-orange-100'],
+['Math','math','bg-green-100'],
+['Alphabet','alphabet','bg-yellow-100'],
+['Memory','memory','bg-purple-100'],
+['Colors','colors','bg-red-100'],
+['Numbers','numbers','bg-indigo-100'],
+['Animals','animals','bg-teal-100'],
+['Shapes','shapes','bg-cyan-100'],
+['Words','words','bg-rose-100']
+].map(([title,key,color])=>(
+<div key={key}
+onClick={()=>navigate(key)}
+className={`${color} p-8 rounded-3xl text-center font-black cursor-pointer active:scale-95 transition`}>
+{title}
+</div>
+))}
+</div>
+);
 }
 
-function Profile({profile,setProfile,onComplete}){
-    return(
-        <div className="flex-1 p-10 flex flex-col">
-            <h2 className="text-2xl font-black mb-6">Your Name</h2>
-            <input
-                type="text"
-                className="border-2 p-4 rounded-2xl mb-6"
-                value={profile.name}
-                onChange={(e)=>setProfile({...profile,name:e.target.value})}
-            />
-            <Button onClick={onComplete} disabled={!profile.name}>Continue</Button>
-        </div>
-    );
-}
-
-function Dashboard({stars,navigate}){
-    return(
-        <div className="flex-1 p-10">
-            <h2 className="text-2xl font-black mb-8">Dashboard</h2>
-
-            <div className="grid grid-cols-2 gap-6">
-                <GameCard title="Brain" color="bg-blue-100" onClick={()=>navigate('brain')}/>
-                <GameCard title="Emotion" color="bg-pink-100" onClick={()=>navigate('emotion')}/>
-                <GameCard title="Focus" color="bg-orange-100" onClick={()=>navigate('focus')}/>
-            </div>
-        </div>
-    );
-}
-
-function GameCard({title,color,onClick}){
-    return(
-        <div onClick={onClick} className={`${color} p-8 rounded-3xl text-center font-black cursor-pointer active:scale-95 transition`}>
-            {title}
-        </div>
-    );
-}
+/* ------------------ ORIGINAL GAMES ------------------ */
 
 function BrainGame({onBack,onWin}){
-    return(
-        <div className="flex-1 flex flex-col items-center justify-center p-10">
-            <Button variant="ghost" onClick={onBack}>Back</Button>
-            <h2 className="text-2xl font-black my-8">Click Blue</h2>
-            <div onClick={onWin} className="w-40 h-40 bg-blue-500 rounded-3xl"></div>
-        </div>
-    );
+return(
+<GameLayout title="Click Blue" onBack={onBack}>
+<div onClick={onWin} className="w-40 h-40 bg-blue-500 rounded-3xl"></div>
+</GameLayout>
+);
 }
 
 function EmotionGame({onBack,onWin}){
-    return(
-        <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
-            <Button variant="ghost" onClick={onBack}>Back</Button>
-            <h2 className="text-2xl font-black my-8">Help Sad Monkey</h2>
-            <Button onClick={onWin}>Give Hug</Button>
-        </div>
-    );
+return(
+<GameLayout title="Who is Happy?" onBack={onBack}>
+<Button onClick={onWin}>😊</Button>
+<Button>😢</Button>
+</GameLayout>
+);
 }
 
 function FocusGame({onBack,onWin}){
-    const [inhale,setInhale]=useState(true);
-    useEffect(()=>{
-        const i=setInterval(()=>setInhale(s=>!s),4000);
-        return()=>clearInterval(i);
-    },[]);
-    return(
-        <div className="flex-1 flex flex-col items-center justify-center p-10">
-            <Button variant="ghost" onClick={onBack}>Back</Button>
-            <div className="w-40 h-40 bg-teal-500 rounded-full animate-breathe my-10"></div>
-            <h2 className="text-2xl font-black">{inhale?'Inhale...':'Exhale...'}</h2>
-            <Button onClick={onWin} className="mt-6">I'm Calm</Button>
-        </div>
-    );
+const [inhale,setInhale]=useState(true);
+useEffect(()=>{
+const i=setInterval(()=>setInhale(s=>!s),4000);
+return()=>clearInterval(i);
+},[]);
+return(
+<GameLayout title={inhale?'Inhale...':'Exhale...'} onBack={onBack}>
+<div className="w-40 h-40 bg-teal-500 rounded-full animate-breathe"></div>
+<Button className="mt-6" onClick={onWin}>Calm</Button>
+</GameLayout>
+);
 }
+
+/* ------------------ EDUCATIONAL GAMES ------------------ */
+
+function MathGame({onBack,onWin}){
+const [ans,setAns]=useState('');
+return(
+<GameLayout title="2 + 3 = ?" onBack={onBack}>
+<input className="border p-3 rounded-xl mb-4"
+value={ans}
+onChange={(e)=>setAns(e.target.value)} />
+<Button onClick={()=>ans==5 && onWin()}>Submit</Button>
+</GameLayout>
+);
+}
+
+function AlphabetGame({onBack,onWin}){
+return(
+<GameLayout title="Click A" onBack={onBack}>
+<div className="flex gap-6 text-4xl font-black">
+<span onClick={onWin} className="cursor-pointer">A</span>
+<span>B</span>
+<span>C</span>
+</div>
+</GameLayout>
+);
+}
+
+function MemoryGame({onBack,onWin}){
+const [show,setShow]=useState(true);
+useEffect(()=>{setTimeout(()=>setShow(false),2000)},[]);
+return(
+<GameLayout title="Remember 8" onBack={onBack}>
+{show?<h1 className="text-6xl font-black">8</h1>:<Button onClick={onWin}>It was 8</Button>}
+</GameLayout>
+);
+}
+
+function ColorGame({onBack,onWin}){
+return(
+<GameLayout title="Click Red" onBack={onBack}>
+<div className="flex gap-4">
+<div onClick={onWin} className="w-16 h-16 bg-red-500 rounded-xl"></div>
+<div className="w-16 h-16 bg-blue-500 rounded-xl"></div>
+</div>
+</GameLayout>
+);
+}
+
+function NumberGame({onBack,onWin}){
+return(
+<GameLayout title="Smallest Number?" onBack={onBack}>
+<div className="flex gap-6 text-3xl">
+<span onClick={onWin}>1</span>
+<span>5</span>
+<span>9</span>
+</div>
+</GameLayout>
+);
+}
+
+function AnimalGame({onBack,onWin}){
+return(
+<GameLayout title="Who says Meow?" onBack={onBack}>
+<Button onClick={onWin}>Cat</Button>
+<Button>Dog</Button>
+</GameLayout>
+);
+}
+
+function ShapeGame({onBack,onWin}){
+return(
+<GameLayout title="Click Circle" onBack={onBack}>
+<div className="flex gap-6">
+<div onClick={onWin} className="w-16 h-16 bg-indigo-500 rounded-full"></div>
+<div className="w-16 h-16 bg-indigo-500"></div>
+</div>
+</GameLayout>
+);
+}
+
+function WordGame({onBack,onWin}){
+return(
+<GameLayout title="Spell CAT" onBack={onBack}>
+<Button onClick={onWin}>C A T</Button>
+</GameLayout>
+);
+}
+
+/* ------------------ REWARD ------------------ */
 
 function Reward({onNext}){
-    return(
-        <div className="flex-1 flex flex-col items-center justify-center p-10">
-            <Icon name="trophy" className="w-20 h-20 text-amber-500 mb-6"/>
-            <h2 className="text-3xl font-black mb-6">Great Job!</h2>
-            <Button onClick={onNext}>Back to Dashboard</Button>
-        </div>
-    );
+return(
+<div className="flex-1 flex flex-col items-center justify-center">
+<Icon name="trophy" className="w-20 h-20 text-amber-500 mb-6"/>
+<h2 className="text-3xl font-black mb-6">Great Job!</h2>
+<Button onClick={onNext}>Back to Dashboard</Button>
+</div>
+);
 }
 
-function ParentDashboard({onBack}){
-    return(
-        <div className="flex-1 p-10">
-            <Button variant="ghost" onClick={onBack}>Back</Button>
-            <h2 className="text-2xl font-black mb-6">Parent Dashboard</h2>
-            <Card>
-                Screen Time: 18m <br/>
-                Happiness: High
-            </Card>
-        </div>
-    );
-}
-
-const root=ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 
 </script>
 </body>
